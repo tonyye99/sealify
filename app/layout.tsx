@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { Nunito } from 'next/font/google'
-import './globals.css'
+// import './globals.css'
 import { Provider } from '@/components/ui/provider'
+import { Toaster } from '@/components/ui/toaster'
 
 const nunito = Nunito({
   subsets: ['latin'],
@@ -21,7 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${nunito.className}`}>
-        <Provider>{children}</Provider>
+        <Provider>
+          <Toaster />
+          {children}
+        </Provider>
       </body>
     </html>
   )
