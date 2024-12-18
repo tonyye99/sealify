@@ -1,3 +1,5 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { HStack } from '@chakra-ui/react'
 import { Link } from '@chakra-ui/react'

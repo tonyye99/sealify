@@ -1,7 +1,9 @@
+'use client'
+
 import AuthForm from '@/components/AuthForm'
 
-const LoginPage = () => {
+const loginPage = () => {
   return <AuthForm type="login" />
 }
 
-export default LoginPage
+export default loginPage

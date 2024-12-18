@@ -1,91 +1,128 @@
-import { Heading, Box, Fieldset, Input } from '@chakra-ui/react'
-import { useState } from 'react'
+'use client'
+
+import { Input, Heading, Box, Flex, Fieldset, Stack } from '@chakra-ui/react'
+import { FC, useState } from 'react'
+import { login, signup } from '@/app/auth/action'
 import { useRouter } from 'next/navigation'
-import { Field } from '@/components/ui/field'
 import { Button } from '@/components/ui/button'
-import { useAuthContext } from '@/app/auth/context'
-import { toaster } from './ui/toaster'
+import { toaster } from '@/components/ui/toaster'
+import { Field } from '@/components/ui/field'
 
 interface AuthFormProps {
-  type: 'login' | 'register'
+  type: 'login' | 'signup'
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
+const RedirectLinkComponent: FC<AuthFormProps> = ({ type }) => {
   const router = useRouter()
+
+  return (
+    <>
+      {type === 'login' ? (
+        <Button variant="ghost" color="blue.500" onClick={() => router.push('/auth/sign-up')}>
+          Don&apos;t have an account? Sign up
+        </Button>
+      ) : (
+        <Button variant="ghost" color="blue.500" onClick={() => router.push('/auth/login')}>
+          Already have an account? Log in
+        </Button>
+      )}
+    </>
+  )
+}
+
+const AuthForm: FC<AuthFormProps> = ({ type }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const { loading, setLoading, login, register } = useAuthContext()
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setLoading(true)
-    try {
-      if (type === 'login') {
-        await login(email, password)
-      } else {
-        await register(email, password)
-      }
 
-      toaster.create({ title: 'Success', type: 'success', description: 'You have successfully logged in.' })
+    try {
+      const formData = new FormData(event.currentTarget)
+      if (type === 'login') {
+        await login(formData)
+      } else {
+        await signup(formData)
+      }
+      toaster.create({ title: 'Success', description: 'Successfully logged in', type: 'success' })
       router.push('/dashboard')
     } catch (error) {
-      toaster.create({ title: 'Error', type: 'error', description: 'Error occured while registering' })
-      console.error('Authentication error:', error)
+      toaster.create({ title: 'Error', description: 'An error occurred', type: 'error' })
+      console.log('Authentication error:', error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
     <Box maxWidth="md" mx="auto" mt={8} p={4} bg="white" shadow="md" rounded="md">
-      <Heading as="h2" size="lg" mb={4}>
-        {type === 'login' ? 'Login' : 'Register'}
-      </Heading>
       <form onSubmit={handleSubmit}>
-        <Fieldset.Root size="lg" maxW="md">
+        <Fieldset.Root>
+          <Stack>
+            <Fieldset.Legend>
+              <Heading as="h2" size="lg">
+                {type === 'login' ? 'Log in' : 'Sign up'}
+              </Heading>
+            </Fieldset.Legend>
+            <Fieldset.HelperText>
+              Enter your email and password to
+              {type === 'login' ? ' log in' : 'sign up'}
+            </Fieldset.HelperText>
+          </Stack>
+
           <Fieldset.Content>
-            <Field label="Email address">
+            <Field label="Email">
               <Input
                 type="email"
                 id="email"
+                name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 placeholder="Enter your email address"
-                padding="3"
+                required
               />
             </Field>
-
+          </Fieldset.Content>
+          <Fieldset.Content>
             <Field label="Password">
               <Input
                 type="password"
                 id="password"
+                name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
                 placeholder="Enter your password"
-                padding="3"
+                required
               />
             </Field>
-
-            {type === 'register' && (
+          </Fieldset.Content>
+          {type === 'signup' && (
+            <Fieldset.Content>
               <Field label="Confirm Password">
                 <Input
                   type="password"
                   id="confirm-password"
+                  name="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
                   placeholder="Confirm your password"
-                  padding="3"
+                  required
                 />
               </Field>
-            )}
-          </Fieldset.Content>
+            </Fieldset.Content>
+          )}
+
+          <Flex justifyContent="space-between" mt={10}>
+            <RedirectLinkComponent type={type} />
+            <Button type="submit" loading={loading}>
+              {type === 'login' ? 'Log in' : 'Sign up'}
+            </Button>
+          </Flex>
         </Fieldset.Root>
-        <Button type="submit" width="full" loading={loading} mt={4}>
-          {type === 'login' ? 'Login' : 'Register'}
-        </Button>
       </form>
     </Box>
   )
