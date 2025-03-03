@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toaster } from '@/components/ui/toaster'
 import { Field } from '@/components/ui/field'
+// import { AuthCredentials, SignupCredentials } from '@/types/auth'
 
 interface AuthFormProps {
   type: 'login' | 'signup'
@@ -35,23 +36,67 @@ const AuthForm: FC<AuthFormProps> = ({ type }) => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  const validateForm = (): boolean => {
+    setError(null)
+
+    if (!email || !password) {
+      setError('Email and password are required')
+      return false
+    }
+
+    if (type === 'signup') {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match')
+        return false
+      }
+
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters')
+        return false
+      }
+    }
+
+    return true
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setLoading(true)
+    setError(null)
+
+    if (!validateForm()) {
+      setLoading(false)
+      return
+    }
 
     try {
       const formData = new FormData(event.currentTarget)
       if (type === 'login') {
         await login(formData)
+        toaster.create({ title: 'Success', description: 'Successfully logged in', type: 'success' })
+        router.push('/dashboard')
       } else {
+        // Check if passwords match before submitting
+        const passwordValue = formData.get('password') as string
+        const confirmPasswordValue = formData.get('confirmPassword') as string
+
+        if (passwordValue !== confirmPasswordValue) {
+          setError('Passwords do not match')
+          setLoading(false)
+          return
+        }
+
         await signup(formData)
+        toaster.create({ title: 'Success', description: 'Account created successfully', type: 'success' })
+        router.push('/dashboard')
       }
-      toaster.create({ title: 'Success', description: 'Successfully logged in', type: 'success' })
-      router.push('/dashboard')
     } catch (error) {
-      toaster.create({ title: 'Error', description: 'An error occurred', type: 'error' })
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      setError(errorMessage)
+      toaster.create({ title: 'Error', description: errorMessage, type: 'error' })
       console.log('Authentication error:', error)
     } finally {
       setLoading(false)
@@ -70,9 +115,15 @@ const AuthForm: FC<AuthFormProps> = ({ type }) => {
             </Fieldset.Legend>
             <Fieldset.HelperText>
               Enter your email and password to
-              {type === 'login' ? ' log in' : 'sign up'}
+              {type === 'login' ? ' log in' : ' sign up'}
             </Fieldset.HelperText>
           </Stack>
+
+          {error && (
+            <Box mt={2} p={2} bg="red.50" color="red.600" rounded="md">
+              {error}
+            </Box>
+          )}
 
           <Fieldset.Content>
             <Field label="Email">

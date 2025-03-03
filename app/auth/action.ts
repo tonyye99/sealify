@@ -3,43 +3,48 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/services/auth.service'
+import { AuthCredentials, SignupCredentials } from '@/types/auth'
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
-  const data = {
+  const supabase = await createServerSupabaseClient()
+  const credentials: AuthCredentials = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  const { error } = await supabase.auth.signInWithPassword(credentials)
 
   if (error) {
-    throw new Error('Sign in error')
+    throw new Error(`Sign in error: ${error.message}`)
   }
 
   revalidatePath('/', 'layout')
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createClient()
-  const data = {
+  const supabase = await createServerSupabaseClient()
+  const credentials: SignupCredentials = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signUp(data)
+  const { error } = await supabase.auth.signUp(credentials)
 
   if (error) {
-    throw new Error('Sign up error')
+    throw new Error(`Sign up error: ${error.message}`)
   }
 
   revalidatePath('/', 'layout')
 }
 
 export async function logout() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    throw new Error(`Logout error: ${error.message}`)
+  }
 
   revalidatePath('/', 'layout')
   redirect('/')

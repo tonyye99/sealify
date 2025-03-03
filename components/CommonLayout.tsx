@@ -1,4 +1,5 @@
 import NavBar from './NavBar'
+import UserMenu from './NavBar/UserMenu'
 
 const CommonLayout = ({
   children,
@@ -7,7 +8,7 @@ const CommonLayout = ({
 }>) => {
   return (
     <>
-      <NavBar />
+      <NavBar userMenu={<UserMenu />} />
       {children}
     </>
   )
